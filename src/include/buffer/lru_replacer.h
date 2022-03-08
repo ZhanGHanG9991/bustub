@@ -47,6 +47,7 @@ class LRUReplacer : public Replacer {
   size_t Size() override;
 
  private:
+  std::mutex latch;
   size_t max_size;
   std::list<frame_id_t> l;
   std::unordered_map<frame_id_t, std::list<frame_id_t>::iterator> mmap;
