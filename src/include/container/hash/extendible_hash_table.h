@@ -15,6 +15,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <cmath>
 
 #include "buffer/buffer_pool_manager.h"
 #include "concurrency/transaction.h"
@@ -134,7 +135,7 @@ class ExtendibleHashTable {
    * @param bucket_page_id the page_id to fetch
    * @return a pointer to a bucket page
    */
-  HASH_TABLE_BUCKET_TYPE *FetchBucketPage(page_id_t bucket_page_id);
+  std::pair<Page *, HASH_TABLE_BUCKET_TYPE *> FetchBucketPage(page_id_t bucket_page_id);
 
   /**
    * Performs insertion with an optional bucket splitting.
@@ -160,6 +161,11 @@ class ExtendibleHashTable {
    * @param value the value that was removed
    */
   void Merge(Transaction *transaction, const KeyType &key, const ValueType &value);
+
+  /**
+   * Pow function for uint32_t
+   */
+  uint32_t Pow(uint32_t base, uint32_t power) const;
 
   // member variables
   page_id_t directory_page_id_;

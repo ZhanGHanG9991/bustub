@@ -22,11 +22,32 @@
 
 namespace bustub {
 
+// reinterpret_cast 没看懂
 template <typename KeyType, typename ValueType, typename KeyComparator>
 HASH_TABLE_TYPE::ExtendibleHashTable(const std::string &name, BufferPoolManager *buffer_pool_manager,
                                      const KeyComparator &comparator, HashFunction<KeyType> hash_fn)
     : buffer_pool_manager_(buffer_pool_manager), comparator_(comparator), hash_fn_(std::move(hash_fn)) {
   //  implement me!
+  //  directory_page
+  auto dir_page = buffer_pool_manager_->NewPage(&directory_page_id_);
+  auto dir_page_data = reinterpret_cast<HashTableDirectoryPage *>(dir_page->GetData());
+
+  page_id_t bucket_0_page_id;
+  page_id_t bucket_1_page_id;
+  buffer_pool_manager_->NewPage(&bucket_0_page_id);
+  buffer_pool_manager_->NewPage(&bucket_1_page_id);
+
+  dir_page_data->SetBucketPageId(0, bucket_0_page_id);
+  dir_page_data->SetLocalDepth(0, 1);
+  dir_page_data->SetBucketPageId(1, bucket_1_page_id);
+  dir_page_data->SetLocalDepth(1, 1);
+
+  dir_page_data->IncrGlobalDepth();
+  dir_page_data->SetPageId(directory_page_id_);
+
+  buffer_pool_manager_->UnpinPage(directory_page_id_, true);
+  buffer_pool_manager_->UnpinPage(bucket_0_page_id, false);
+  buffer_pool_manager_->UnpinPage(bucket_1_page_id, false);
 }
 
 /*****************************************************************************
@@ -46,22 +67,30 @@ uint32_t HASH_TABLE_TYPE::Hash(KeyType key) {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 inline uint32_t HASH_TABLE_TYPE::KeyToDirectoryIndex(KeyType key, HashTableDirectoryPage *dir_page) {
-  return 0;
+  return Hash(key) & dir_page->GetGlobalDepthMask();
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 inline uint32_t HASH_TABLE_TYPE::KeyToPageId(KeyType key, HashTableDirectoryPage *dir_page) {
-  return 0;
+  return dir_page->GetBucketPageId(KeyToDirectoryIndex(key, dir_page));
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 HashTableDirectoryPage *HASH_TABLE_TYPE::FetchDirectoryPage() {
-  return nullptr;
+  return reinterpret_cast<HashTableDirectoryPage *>(buffer_pool_manager_->FetchPage(directory_page_id_)->GetData());
+}
+
+// reinterpret_cast 没看懂
+template <typename KeyType, typename ValueType, typename KeyComparator>
+std::pair<Page *, HASH_TABLE_BUCKET_TYPE *> HASH_TABLE_TYPE::FetchBucketPage(page_id_t bucket_page_id) {
+  auto bucket_page = buffer_pool_manager_->FetchPage(bucket_page_id);
+  auto bucket_page_data = reinterpret_cast<HASH_TABLE_BUCKET_TYPE *>(bucket_page->GetData());
+  return std::pair<Page *, HASH_TABLE_BUCKET_TYPE *>(bucket_page, bucket_page_data);
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
-HASH_TABLE_BUCKET_TYPE *HASH_TABLE_TYPE::FetchBucketPage(page_id_t bucket_page_id) {
-  return nullptr;
+uint32_t HASH_TABLE_TYPE::Pow(uint32_t base, uint32_t power) const {
+  return static_cast<uint32_t>(std::pow(static_cast<long double>(base), static_cast<long double>(power)));
 }
 
 /*****************************************************************************
