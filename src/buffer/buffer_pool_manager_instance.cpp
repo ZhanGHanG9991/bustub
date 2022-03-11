@@ -49,7 +49,7 @@ BufferPoolManagerInstance::~BufferPoolManagerInstance() {
 
 bool BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) {
   // Make sure you call DiskManager::WritePage!
-  if (page_table_.find(page_id) != page_table_.end()){
+  if (page_table_.find(page_id) != page_table_.end()) {
     frame_id_t frame_id = page_table_[page_id];
     FlushPg(page_id);
     pages_[frame_id].is_dirty_ = false;
@@ -60,7 +60,7 @@ bool BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) {
 
 void BufferPoolManagerInstance::FlushAllPgsImp() {
   // You can do it!
-  for(auto& tuple : page_table_) {
+  for (auto &tuple : page_table_) {
     FlushPgImp(tuple.first);
   }
 }
@@ -72,11 +72,11 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
   // 3.   Update P's metadata, zero out memory and add P to the page table.
   // 4.   Set the page ID output parameter. Return a pointer to P.
   frame_id_t frame_id = FindReplacedPage();
-  if(frame_id == -1) {
+  if (frame_id == -1) {
     return nullptr;
   }
   pages_[frame_id].page_id_ = AllocatePage();
-  // TODO ++???????????
+  // TODO ++??????????
   pages_[frame_id].pin_count_++;
   pages_[frame_id].is_dirty_ = false;
   *page_id = pages_[frame_id].page_id_;
@@ -94,7 +94,7 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
   // 3.     Delete R from the page table and insert P.
   // 4.     Update P's metadata, read in the page content from disk, and then return a pointer to P.
   frame_id_t frame_id;
-  if(page_table_.find(page_id) != page_table_.end()) {
+  if (page_table_.find(page_id) != page_table_.end()) {
     frame_id = page_table_[page_id];
     replacer_->Pin(frame_id);
     pages_[frame_id].pin_count_++;
@@ -121,9 +121,9 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
   // 1.   If P does not exist, return true.
   // 2.   If P exists, but has a non-zero pin-count, return false. Someone is using the page.
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
-  if(page_table_.find(page_id) != page_table_.end()) {
+  if (page_table_.find(page_id) != page_table_.end()) {
     frame_id_t frame_id = page_table_[page_id];
-    if(pages_[frame_id].GetPinCount() > 0) {
+    if (pages_[frame_id].GetPinCount() > 0) {
       return false;
     }
     memset(pages_[frame_id].GetData(), 0, PAGE_SIZE);
@@ -133,13 +133,13 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
     free_list_.emplace_back(frame_id);
     page_table_.erase(page_id);
     return true;
-  }else {
+  } else {
     return true;
   }
 }
 
 bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
-  if(page_table_.find(page_id) != page_table_.end()) {
+  if (page_table_.find(page_id) != page_table_.end()) {
     frame_id_t frame_id = page_table_[page_id];
     if (pages_[frame_id].GetPinCount() == 0) {
       return false;
@@ -174,7 +174,7 @@ frame_id_t BufferPoolManagerInstance::FindReplacedPage() {
     free_list_.pop_front();
     return frame_id;
   }
-  if(replacer_->Victim(&frame_id)) {
+  if (replacer_->Victim(&frame_id)) {
     page_id_t page_id = pages_[frame_id].GetPageId();
     FlushPg(page_id);
     pages_[frame_id].is_dirty_ = false;

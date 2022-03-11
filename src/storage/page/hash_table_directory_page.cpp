@@ -27,9 +27,7 @@ void HashTableDirectoryPage::SetLSN(lsn_t lsn) { lsn_ = lsn; }
 
 uint32_t HashTableDirectoryPage::GetGlobalDepth() { return global_depth_; }
 
-uint32_t HashTableDirectoryPage::GetGlobalDepthMask() {
-  return Pow(2, global_depth_) - 1;
-}
+uint32_t HashTableDirectoryPage::GetGlobalDepthMask() { return Pow(2, global_depth_) - 1; }
 
 void HashTableDirectoryPage::IncrGlobalDepth() { global_depth_++; }
 
@@ -44,8 +42,8 @@ void HashTableDirectoryPage::SetBucketPageId(uint32_t bucket_idx, page_id_t buck
 uint32_t HashTableDirectoryPage::Size() { return Pow(2, global_depth_); }
 
 bool HashTableDirectoryPage::CanShrink() {
-  for (uint32_t i = 0;i<Size();i++){
-    if(GetLocalDepth(i) == global_depth_) {
+  for (uint32_t i = 0; i < Size(); i++) {
+    if (GetLocalDepth(i) == global_depth_) {
       return false;
     }
   }
@@ -71,14 +69,14 @@ void HashTableDirectoryPage::DecrLocalDepth(uint32_t bucket_idx) {
 }
 
 // TODO 怎么写的 没看懂
-  /**
-   * Gets the high bit corresponding to the bucket's local depth.
-   * This is not the same as the bucket index itself.  This method
-   * is helpful for finding the pair, or "split image", of a bucket.
-   *
-   * @param bucket_idx bucket index to lookup
-   * @return the high bit corresponding to the bucket's local depth
-   */
+/**
+ * Gets the high bit corresponding to the bucket's local depth.
+ * This is not the same as the bucket index itself.  This method
+ * is helpful for finding the pair, or "split image", of a bucket.
+ *
+ * @param bucket_idx bucket index to lookup
+ * @return the high bit corresponding to the bucket's local depth
+ */
 uint32_t HashTableDirectoryPage::GetLocalHighBit(uint32_t bucket_idx) {
   auto local_depth = GetLocalDepth(bucket_idx);
   return ((bucket_idx >> (local_depth - 1)) + 1) << (local_depth - 1);
@@ -88,6 +86,13 @@ uint32_t HashTableDirectoryPage::GetSplitImageIndex(uint32_t bucket_idx) {
   auto high_bits = GetLocalHighBit(bucket_idx);
   uint32_t split_image_index = high_bits | (bucket_idx & (Pow(2, GetLocalDepth(bucket_idx) - 1) - 1));
   return split_image_index & GetLocalDepthMask(bucket_idx);
+
+  // auto which = GetLocalDepth(bucket_idx) - 1;
+  // if (bucket_idx >> which == 1) {
+  //   return bucket_idx & ((1 << which) - 1);
+  // } else {
+  //   return bucket_idx | (1 << which);
+  // }
 }
 
 /**
