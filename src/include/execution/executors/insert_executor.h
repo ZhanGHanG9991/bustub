@@ -59,6 +59,12 @@ class InsertExecutor : public AbstractExecutor {
  private:
   /** The insert plan node to be executed*/
   const InsertPlanNode *plan_;
+
+  TableInfo *table_info_{Catalog::NULL_TABLE_INFO};
+  // 循环插入元组的计数变量，得到在Next函数中，应该插入哪个vector<Value>。因为可以批量插入。
+  std::uint32_t insert_index_;
+
+  std::unique_ptr<AbstractExecutor> child_executor_;
 };
 
 }  // namespace bustub
