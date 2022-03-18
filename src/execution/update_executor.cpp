@@ -29,10 +29,12 @@ bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
     Tuple updated_tuple = GenerateUpdatedTuple(*tuple);
     table_info_->table_->UpdateTuple(updated_tuple, *rid, exec_ctx_->GetTransaction());
     for (auto index_info : index_infos_) {
-      auto key_tuple =
+      auto old_tuple =
+          tuple->KeyFromTuple(table_info_->schema_, index_info->key_schema_, index_info->index_->GetKeyAttrs());
+      auto new_tuple =
           updated_tuple.KeyFromTuple(table_info_->schema_, index_info->key_schema_, index_info->index_->GetKeyAttrs());
-      index_info->index_->DeleteEntry(key_tuple, *rid, exec_ctx_->GetTransaction());
-      index_info->index_->InsertEntry(key_tuple, *rid, exec_ctx_->GetTransaction());
+      index_info->index_->DeleteEntry(old_tuple, *rid, exec_ctx_->GetTransaction());
+      index_info->index_->InsertEntry(new_tuple, *rid, exec_ctx_->GetTransaction());
     }
     return true;
   } else {
