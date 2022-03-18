@@ -65,6 +65,8 @@ class InsertExecutor : public AbstractExecutor {
   std::uint32_t insert_index_;
 
   std::unique_ptr<AbstractExecutor> child_executor_;
+
+  std::vector<IndexInfo *> index_infos_;
 };
 
 }  // namespace bustub

@@ -20,6 +20,7 @@ InsertExecutor::InsertExecutor(ExecutorContext *exec_ctx, const InsertPlanNode *
                                std::unique_ptr<AbstractExecutor> &&child_executor)
     : AbstractExecutor(exec_ctx), plan_(plan), child_executor_(std::move(child_executor)) {
   table_info_ = exec_ctx->GetCatalog()->GetTable(plan_->TableOid());
+  index_infos_ = exec_ctx->GetCatalog()->GetTableIndexes(table_info_->name_);
   insert_index_ = 0;
 }
 
@@ -43,6 +44,13 @@ bool InsertExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
   } else {
     if (child_executor_->Next(tuple, rid)) {
       is_inserted = table_info_->table_->InsertTuple(*tuple, rid, exec_ctx_->GetTransaction());
+    }
+  }
+  if (is_inserted) {
+    for (auto index_info : index_infos_) {
+      auto tuple_key =
+          tuple->KeyFromTuple(table_info_->schema_, index_info->key_schema_, index_info->index_->GetKeyAttrs());
+      index_info->index_->InsertEntry(tuple_key, *rid, exec_ctx_->GetTransaction());
     }
   }
   return is_inserted;
