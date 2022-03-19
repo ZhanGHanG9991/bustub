@@ -38,6 +38,8 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
                          std::unique_ptr<AbstractExecutor> &&left_executor,
                          std::unique_ptr<AbstractExecutor> &&right_executor);
 
+  ~NestedLoopJoinExecutor() override;
+
   /** Initialize the join */
   void Init() override;
 
@@ -55,6 +57,21 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
  private:
   /** The NestedLoopJoin plan node to be executed. */
   const NestedLoopJoinPlanNode *plan_;
+
+  std::unique_ptr<AbstractExecutor> left_executor_;
+
+  std::unique_ptr<AbstractExecutor> right_executor_;
+
+  /** Whether to allocate memory for the predicate_ */
+  bool is_alloc_{false};
+
+  mutable const AbstractExpression *predicate_{nullptr};
+
+  Tuple left_tuple;
+
+  RID left_rid;
+  // 首先在进入next函数前，先判断是否左边能拿到tuple，能，再进入next中的循环
+  bool left_is_selected;
 };
 
 }  // namespace bustub
