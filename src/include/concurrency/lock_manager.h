@@ -50,7 +50,13 @@ class LockManager {
     // for notifying blocked transactions on this rid
     std::condition_variable cv_;
     // txn_id of an upgrading transaction (if any)
-    txn_id_t upgrading_ = INVALID_TXN_ID;
+    bool upgrading_ = false;
+
+    // 正在被exclusiveLock占用
+    bool is_writing_ = false;
+
+    // 正在被多少sharedLock占用
+    int sharing_count_ = 0;
   };
 
  public:
@@ -104,11 +110,31 @@ class LockManager {
    */
   bool Unlock(Transaction *txn, const RID &rid);
 
+  bool CheckForLock(Transaction *txn);
+
+  std::list<LockManager::LockRequest>::iterator GetIterator(std::list<LockManager::LockRequest> *request_queue,
+                                                            Transaction *txn);
+
+  /**
+   * Check if the status of the transaction is set to Aborted, and throw an exception if it is.
+   */
+  void CheckAborted(Transaction *txn, LockRequestQueue *request_queue);
+
+  void DeadlockPrevent(Transaction *txn, LockRequestQueue *request_queue);
+
  private:
   std::mutex latch_;
 
-  /** Lock table for lock requests. */
+  /** Lock table for lock requests.
+   *  tuple rid -> 请求该tuple的request list
+   */
   std::unordered_map<RID, LockRequestQueue> lock_table_;
+
+  /**
+   * txn id -> txn
+   *
+   */
+  std::unordered_map<txn_id_t, Transaction *> id_to_txn_;
 };
 
 }  // namespace bustub
